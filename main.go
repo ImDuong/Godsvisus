@@ -1,133 +1,73 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"image/color"
-	"math/rand"
-	"net/http"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 )
 
-// ref: https://dev.to/aurelievache/learning-go-by-examples-part-7-create-a-cross-platform-gui-desktop-app-in-go-44j1
+type dsLayout struct {
+	node *canvas.Circle
+	text *canvas.Text
 
-const MEME_API = "https://api.imgflip.com/get_memes"
+	canvas fyne.CanvasObject
+}
 
-var myClient = &http.Client{Timeout: 10 * time.Second}
+func (ds *dsLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	return fyne.NewSize(50, 50)
+}
 
-type (
-	Meme struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		URL  string `json:"url"`
+func (ds *dsLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
+	diameter := fyne.Min(size.Width, size.Height)
+	radius := diameter / 2
+	size = fyne.NewSize(diameter, diameter)
+	centerPos := fyne.NewPos(size.Width/2, size.Height/2)
+
+	ds.node.Resize(size)
+	ds.node.Move(fyne.NewPos(centerPos.X-radius, centerPos.Y-radius))
+
+	ds.text.Move(fyne.NewPos(radius-ds.node.StrokeWidth, radius-ds.node.StrokeWidth-ds.text.TextSize))
+}
+
+func (ds *dsLayout) render() *fyne.Container {
+	ds.node = &canvas.Circle{
+		StrokeColor: color.White,
+		StrokeWidth: 5,
+	}
+	ds.text = &canvas.Text{
+		Text:     "1",
+		Color:    color.White,
+		TextSize: 12,
+		TextStyle: fyne.TextStyle{
+			Bold: true,
+		},
 	}
 
-	MemeData struct {
-		Memes []Meme `json:"memes"`
-	}
+	container := container.NewWithoutLayout(ds.node, ds.text)
+	container.Layout = ds
 
-	MemeResponse struct {
-		IsSuccess bool     `json:"success"`
-		Data      MemeData `json:"data"`
-	}
-)
-
-func getAMeme() (*Meme, error) {
-	r, err := myClient.Get(MEME_API)
-	if err != nil {
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	var memeResponse MemeResponse
-	err = json.NewDecoder(r.Body).Decode(&memeResponse)
-	if err != nil {
-		return nil, err
-	}
-	if memeResponse.IsSuccess != true {
-		return nil, errors.New("can not get meme")
-	}
-	// get a random index
-	rand.Seed(time.Now().UnixNano())
-	randIdx := 0 + rand.Intn(len(memeResponse.Data.Memes)-1-0+1)
-	return &memeResponse.Data.Memes[randIdx], nil
+	ds.canvas = container
+	return container
 }
 
 func main() {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("GODSVISUS")
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Node Visus")
 
-	// file menu
-	fileMenu := fyne.NewMenu("File", fyne.NewMenuItem(
-		"Quit", func() {
-			visusApp.Quit()
-		},
-	))
+	ds := &dsLayout{}
+	content := ds.render()
 
-	mainMenu := fyne.NewMainMenu(
-		fileMenu,
-	)
-
-	visusWindow.SetMainMenu(mainMenu)
-
-	// define a welcome text
-	text := canvas.NewText("What do you expect?", color.White)
+	text := canvas.NewText("Hello world to visus", color.White)
 	text.Alignment = fyne.TextAlignCenter
-
-	// get a meme
-	meme, err := getAMeme()
-	if err != nil {
-		panic(err)
-	}
-
-	// define a resource holder
-	resource, err := fyne.LoadResourceFromURLString(meme.URL)
-	if err != nil {
-		panic(err)
-	}
-	resourceHolder := canvas.NewImageFromResource(resource)
-	resourceHolder.SetMinSize(fyne.Size{
-		Width:  700,
-		Height: 500,
-	})
-
-	// define a button to get a new meme
-	getMemeBtn := widget.NewButton("Pandora", func() {
-		meme, err = getAMeme()
-		if err != nil {
-			panic(err)
-		}
-		resource, err := fyne.LoadResourceFromURLString(meme.URL)
-		if err != nil {
-			panic(err)
-		}
-		resourceHolder.Resource = resource
-		resourceHolder.Refresh()
-	})
-	getMemeBtn.Importance = widget.HighImportance
-
-	// display a vertical box to contain text, image, button
+	text.TextStyle = fyne.TextStyle{Italic: true}
 	box := container.NewVBox(
 		text,
-		resourceHolder,
-		getMemeBtn,
+		content,
 	)
-
-	// display content
-	visusWindow.SetContent(box)
-
-	// attach Escape key to exit app
-	visusWindow.Canvas().SetOnTypedKey(func(ke *fyne.KeyEvent) {
-		if ke.Name == fyne.KeyEscape {
-			visusApp.Quit()
-		}
-	})
-
-	visusWindow.ShowAndRun()
+	myWindow.SetContent(box)
+	myWindow.Resize(fyne.NewSize(500, 500))
+	myWindow.ShowAndRun()
 }
