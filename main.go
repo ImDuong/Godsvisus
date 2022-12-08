@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -9,44 +10,65 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-type dsLayout struct {
-	node *canvas.Circle
-	text *canvas.Text
+type (
+	Node struct {
+		Value interface{}
+	}
 
-	canvas fyne.CanvasObject
-}
+	NodeWraper struct {
+		Data      Node
+		Component *canvas.Circle
+		Text      *canvas.Text
+	}
+
+	NodeWrapperList struct {
+		Nodes []NodeWraper
+	}
+
+	dsLayout struct {
+		component NodeWrapperList
+		canvas    fyne.CanvasObject
+	}
+)
 
 func (ds *dsLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(50, 50)
 }
 
 func (ds *dsLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
-	diameter := fyne.Min(size.Width, size.Height)
-	radius := diameter / 2
-	size = fyne.NewSize(diameter, diameter)
-	centerPos := fyne.NewPos(size.Width/2, size.Height/2)
+	for _, node := range ds.component.Nodes {
+		diameter := fyne.Min(size.Width, size.Height)
+		radius := diameter / 2
+		size = fyne.NewSize(diameter, diameter)
+		centerPos := fyne.NewPos(size.Width/2, size.Height/2)
 
-	ds.node.Resize(size)
-	ds.node.Move(fyne.NewPos(centerPos.X-radius, centerPos.Y-radius))
+		node.Component.Resize(size)
+		node.Component.Move(fyne.NewPos(centerPos.X-radius, centerPos.Y-radius))
 
-	ds.text.Move(fyne.NewPos(radius-ds.node.StrokeWidth, radius-ds.node.StrokeWidth-ds.text.TextSize))
+		node.Text.Move(fyne.NewPos(radius-node.Component.StrokeWidth, radius-node.Component.StrokeWidth-node.Text.TextSize))
+	}
+
 }
 
 func (ds *dsLayout) render() *fyne.Container {
-	ds.node = &canvas.Circle{
-		StrokeColor: color.White,
-		StrokeWidth: 5,
-	}
-	ds.text = &canvas.Text{
-		Text:     "1",
-		Color:    color.White,
-		TextSize: 12,
-		TextStyle: fyne.TextStyle{
-			Bold: true,
-		},
+	canvasObjs := []fyne.CanvasObject{}
+	for i := range ds.component.Nodes {
+		ds.component.Nodes[i].Component = &canvas.Circle{
+			StrokeColor: color.White,
+			StrokeWidth: 5,
+		}
+		ds.component.Nodes[i].Text = &canvas.Text{
+			Text:     fmt.Sprintf("%v", ds.component.Nodes[i].Data.Value),
+			Color:    color.White,
+			TextSize: 12,
+			TextStyle: fyne.TextStyle{
+				Bold: true,
+			},
+		}
+		canvasObjs = append(canvasObjs, ds.component.Nodes[i].Component, ds.component.Nodes[i].Text)
 	}
 
-	container := container.NewWithoutLayout(ds.node, ds.text)
+	container := container.NewWithoutLayout(canvasObjs...)
 	container.Layout = ds
 
 	ds.canvas = container
@@ -57,7 +79,22 @@ func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Node Visus")
 
-	ds := &dsLayout{}
+	ds := &dsLayout{
+		component: NodeWrapperList{
+			Nodes: []NodeWraper{
+				{
+					Data: Node{
+						Value: 1,
+					},
+				},
+				{
+					Data: Node{
+						Value: 2,
+					},
+				},
+			},
+		},
+	}
 	content := ds.render()
 
 	text := canvas.NewText("Hello world to visus", color.White)
