@@ -1,4 +1,4 @@
-module godvisus
+module godsvisus
 
 go 1.16
 
