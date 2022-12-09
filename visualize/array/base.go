@@ -85,15 +85,16 @@ func (lay *ArrayLayout) render() *fyne.Container {
 	return container
 }
 
-func Load(win fyne.Window) fyne.CanvasObject {
-	testArray := []int{10, 2, 3}
-
-	eleList := entity.NewElementWrapperList(testArray)
+func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+	eleList, err := entity.NewElementWrapperList(data)
+	if err != nil {
+		return nil, err
+	}
 
 	lay := &ArrayLayout{
 		component: eleList,
 	}
 
 	container := lay.render()
-	return container
+	return container, nil
 }

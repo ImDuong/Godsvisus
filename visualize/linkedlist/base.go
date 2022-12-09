@@ -1,6 +1,7 @@
 package linkedlist
 
 import (
+	"errors"
 	"fmt"
 	"image/color"
 
@@ -120,18 +121,13 @@ func (lay *LinkedListLayout) render() *fyne.Container {
 	return container
 }
 
-func Load(win fyne.Window) fyne.CanvasObject {
-	rootNode := &entity.Node{
-		Value: 12,
-		Next: &entity.Node{
-			Value: 3,
-			Next: &entity.Node{
-				Value: 69,
-			},
-		},
+func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+	dataNode, ok := data.(*entity.Node)
+	if !ok {
+		return nil, errors.New("input is not a valid node")
 	}
 
-	rootNodeWrapper := entity.NewNodeWrapper(rootNode)
+	rootNodeWrapper := entity.NewNodeWrapper(dataNode)
 
 	lay := &LinkedListLayout{
 		component: &entity.LinkedList{
@@ -140,5 +136,5 @@ func Load(win fyne.Window) fyne.CanvasObject {
 	}
 
 	container := lay.render()
-	return container
+	return container, nil
 }

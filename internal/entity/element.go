@@ -1,6 +1,11 @@
 package entity
 
-import "fyne.io/fyne/v2/canvas"
+import (
+	"errors"
+	"reflect"
+
+	"fyne.io/fyne/v2/canvas"
+)
 
 type (
 	ElementWrapper struct {
@@ -15,14 +20,19 @@ type (
 	}
 )
 
-func NewElementWrapperList(data []int) *ElementWrapperList {
+func NewElementWrapperList(data interface{}) (*ElementWrapperList, error) {
+	if reflect.TypeOf(data).Kind() != reflect.Slice {
+		return nil, errors.New("input data is not a list")
+	}
+	dataSlice := reflect.ValueOf(data)
 	eleList := ElementWrapperList{}
-	for i := range data {
+
+	for i := 0; i < dataSlice.Len(); i++ {
 		eleList.Nodes = append(eleList.Nodes, &ElementWrapper{
 			Data: &Node{
-				Value: data[i],
+				Value: dataSlice.Index(i).Interface(),
 			},
 		})
 	}
-	return &eleList
+	return &eleList, nil
 }

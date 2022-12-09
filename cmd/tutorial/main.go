@@ -1,8 +1,10 @@
 package main
 
 import (
+	"godsvisus/internal/entity"
 	"godsvisus/visualize/array"
 	"godsvisus/visualize/linkedlist"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -15,17 +17,26 @@ type appInfo struct {
 	name string
 	icon fyne.Resource
 	canv bool
-	run  func(fyne.Window) fyne.CanvasObject
+	data interface{}
+	run  func(fyne.Window, interface{}) (fyne.CanvasObject, error)
 }
 
 var apps = []appInfo{
-	{"Linked List", nil, false, linkedlist.Load},
-	{"Array", nil, false, array.Load},
+	{"Linked List", nil, false, &entity.Node{
+		Value: 12,
+		Next: &entity.Node{
+			Value: 3,
+			Next: &entity.Node{
+				Value: 69,
+			},
+		},
+	}, linkedlist.Load},
+	{"Array", nil, false, []int{10, 2, 3}, array.Load},
 }
 
 func main() {
 	myApp := app.New()
-	myWindow := myApp.NewWindow("Gods Visus")
+	myWindow := myApp.NewWindow("Gods Visus Tutorial")
 
 	content := container.NewMax()
 
@@ -49,7 +60,12 @@ func main() {
 			text.SetText(apps[id].name)
 		})
 	appList.OnSelected = func(id widget.ListItemID) {
-		content.Objects = []fyne.CanvasObject{apps[id].run(myWindow)}
+		canvasObj, err := apps[id].run(myWindow, apps[id].data)
+		if err != nil {
+			log.Fatal("Error when drawing gadget", err)
+		} else {
+			content.Objects = []fyne.CanvasObject{canvasObj}
+		}
 	}
 
 	split := container.NewHSplit(appList, content)
