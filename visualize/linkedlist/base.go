@@ -14,7 +14,7 @@ import (
 
 type (
 	LinkedListLayout struct {
-		component entity.LinkedList
+		component *entity.LinkedList
 		canvas    fyne.CanvasObject
 	}
 )
@@ -134,7 +134,7 @@ func Load(win fyne.Window) fyne.CanvasObject {
 	rootNodeWrapper := entity.NewNodeWrapper(rootNode)
 
 	lay := &LinkedListLayout{
-		component: entity.LinkedList{
+		component: &entity.LinkedList{
 			Root: rootNodeWrapper,
 		},
 	}
