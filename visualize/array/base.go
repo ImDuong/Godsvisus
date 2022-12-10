@@ -1,6 +1,7 @@
 package array
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
 
@@ -9,12 +10,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
 type (
 	ArrayLayout struct {
 		component *entity.ElementWrapperList
+		detail    *canvas.Text
 		canvas    fyne.CanvasObject
 	}
 )
@@ -25,7 +28,13 @@ func (lay *ArrayLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func (lay *ArrayLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 	// downsize 10 times
-	size = fyne.NewSize(size.Width/10, size.Height/10)
+	var downRatio float32 = 10
+	if size.Width > lay.MinSize(objs).Width*downRatio {
+		size = fyne.NewSize(size.Width/downRatio, size.Height)
+	}
+	if size.Height > lay.MinSize(objs).Height*downRatio {
+		size = fyne.NewSize(size.Width, size.Height/downRatio)
+	}
 
 	// hardcode hoziontal layout for an array
 	distance := fyne.NewSize(size.Width, 0)
@@ -48,16 +57,28 @@ func (lay *ArrayLayout) render() *fyne.Container {
 			StrokeWidth: 2,
 		}
 		mainText := fmt.Sprintf("%v", lay.component.Nodes[i].Data.Value)
+		eleDetailJson, err := json.Marshal(lay.component.Nodes[i].Data)
+		if err != nil {
+			panic(err)
+		}
 		lay.component.Nodes[i].Interaction = widget.NewButton(mainText, func() {
-			fmt.Println(mainText)
+			lay.detail.Text = string(eleDetailJson)
+			lay.detail.Refresh()
 		})
 		canvasObjs = append(canvasObjs, lay.component.Nodes[i].Shape, lay.component.Nodes[i].Interaction)
 	}
-	container := container.NewWithoutLayout(canvasObjs...)
-	container.Layout = lay
+	lay.detail = &canvas.Text{
+		Color:    color.White,
+		TextSize: 12,
+		TextStyle: fyne.TextStyle{
+			Bold: true,
+		},
+	}
+	content := container.NewWithoutLayout(canvasObjs...)
+	content.Layout = lay
 
-	lay.canvas = container
-	return container
+	lay.canvas = content
+	return content
 }
 
 func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
@@ -70,6 +91,13 @@ func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
 		component: eleList,
 	}
 
-	container := lay.render()
-	return container, nil
+	content := lay.render()
+
+	box := container.NewVBox(
+		content,
+		layout.NewSpacer(),
+		lay.detail,
+		layout.NewSpacer(),
+	)
+	return box, nil
 }

@@ -71,6 +71,6 @@ func main() {
 	split := container.NewHSplit(appList, content)
 	split.Offset = 0.1
 	myWindow.SetContent(split)
-	myWindow.Resize(fyne.NewSize(500, 500))
+	myWindow.Resize(fyne.NewSize(1000, 500))
 	myWindow.ShowAndRun()
 }
