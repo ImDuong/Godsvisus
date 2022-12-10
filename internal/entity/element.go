@@ -4,19 +4,20 @@ import (
 	"errors"
 	"reflect"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/widget"
 )
 
 type (
 	ElementWrapper struct {
-		Data      *Node
-		Component *canvas.Rectangle
-		Text      *canvas.Text
+		Data        *Node
+		Shape       *canvas.Rectangle
+		Interaction *widget.Button
 	}
 
 	ElementWrapperList struct {
-		Nodes       []*ElementWrapper
-		Connections []*canvas.Line
+		Nodes []*ElementWrapper
 	}
 )
 
@@ -35,4 +36,17 @@ func NewElementWrapperList(data interface{}) (*ElementWrapperList, error) {
 		})
 	}
 	return &eleList, nil
+}
+
+func (ew *ElementWrapper) Resize(s fyne.Size) {
+	ew.Shape.Resize(s)
+	ew.Interaction.Resize(s)
+}
+
+func (ew *ElementWrapper) Move(pos fyne.Position) {
+	// move the shape
+	ew.Shape.Move(pos)
+
+	// move the button along with the shape
+	ew.Interaction.Move(pos)
 }

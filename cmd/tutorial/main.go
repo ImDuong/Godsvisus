@@ -31,7 +31,7 @@ var apps = []appInfo{
 			},
 		},
 	}, linkedlist.Load},
-	{"Array", nil, false, []int{10, 2, 3}, array.Load},
+	{"Array", nil, false, []int{10, 2, 69}, array.Load},
 }
 
 func main() {
