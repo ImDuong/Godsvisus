@@ -17,7 +17,7 @@ import (
 type (
 	ArrayLayout struct {
 		component *entity.ElementWrapperList
-		detail    *canvas.Text
+		detail    *entity.NodeInfo
 		canvas    fyne.CanvasObject
 	}
 )
@@ -57,23 +57,20 @@ func (lay *ArrayLayout) render() *fyne.Container {
 			StrokeWidth: 2,
 		}
 		mainText := fmt.Sprintf("%v", lay.component.Nodes[i].Data.Value)
+		eleAddr := fmt.Sprintf("%p", lay.component.Nodes[i].Data)
 		eleDetailJson, err := json.Marshal(lay.component.Nodes[i].Data)
 		if err != nil {
 			panic(err)
 		}
 		lay.component.Nodes[i].Interaction = widget.NewButton(mainText, func() {
-			lay.detail.Text = string(eleDetailJson)
-			lay.detail.Refresh()
+			lay.detail.SetInfo(eleAddr, string(eleDetailJson))
+			lay.detail.Detail.Refresh()
 		})
 		canvasObjs = append(canvasObjs, lay.component.Nodes[i].Shape, lay.component.Nodes[i].Interaction)
 	}
-	lay.detail = &canvas.Text{
-		Color:    color.White,
-		TextSize: 12,
-		TextStyle: fyne.TextStyle{
-			Bold: true,
-		},
-	}
+
+	lay.detail = entity.NewNodeInfo()
+
 	content := container.NewWithoutLayout(canvasObjs...)
 	content.Layout = lay
 
@@ -96,7 +93,7 @@ func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
 	box := container.NewVBox(
 		content,
 		layout.NewSpacer(),
-		lay.detail,
+		lay.detail.Detail,
 		layout.NewSpacer(),
 	)
 	return box, nil
