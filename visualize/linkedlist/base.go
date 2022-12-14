@@ -10,12 +10,15 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 type (
 	LinkedListLayout struct {
 		component *entity.LinkedList
+		detail    *entity.NodeInfo
 		canvas    fyne.CanvasObject
 	}
 )
@@ -26,24 +29,29 @@ func (lay *LinkedListLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func (lay *LinkedListLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 	// downsize 10 times
-	size = fyne.NewSize(size.Width/10, size.Height/10)
+	var downRatio float32 = 10
 
+	// calculate diameter, radius and new size for a node
 	diameter := fyne.Min(size.Width, size.Height)
+	if diameter > lay.canvas.MinSize().Width*downRatio {
+		diameter = diameter / downRatio
+	}
 	radius := diameter / 2
 	size = fyne.NewSize(diameter, diameter)
 
-	// hardcode hoziontal layout for a list
-	distance := fyne.NewSize(radius+10, 0)
+	// hardcode the length of connecting lines between nodes
+	var conLineLen float32 = 10
+	distance := fyne.NewSize(radius+conLineLen, 0)
 
 	curNode := lay.component.Root
 	curIdx := 0
 	for curNode != nil {
+		curNode.Resize(size)
+
 		accumulateDistance := fyne.NewSize(
 			float32(curIdx)*distance.Width,
 			float32(curIdx)*distance.Height,
 		)
-
-		curNode.Component.Resize(size)
 
 		// get the position at the center of the node
 		centerPos := fyne.NewPos(
@@ -52,28 +60,22 @@ func (lay *LinkedListLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 		)
 
 		// move the node to the right position: (center.X - radius, center.Y - radius)
-		curNode.Component.Move(fyne.NewPos(
+		curNode.Move(fyne.NewPos(
 			centerPos.X-radius+accumulateDistance.Width,
 			centerPos.Y-radius+accumulateDistance.Height,
-		))
-
-		// move the text to the center of the node
-		curNode.Text.Move(fyne.NewPos(
-			centerPos.X-curNode.Component.StrokeWidth-float32(len(curNode.Text.Text))*curNode.Text.TextSize/4+accumulateDistance.Width,
-			centerPos.Y-curNode.Component.StrokeWidth-curNode.Text.TextSize/2+accumulateDistance.Height,
 		))
 
 		// add connecting line from the second node
 		if curIdx > 0 {
 			// attach connnecting line's head position to the previous node
 			lay.component.Connections[curIdx-1].Position1 = fyne.NewPos(
-				curNode.Prev.Component.Position2.X,
+				curNode.Prev.Shape.Position2.X,
 				centerPos.Y,
 			)
 
 			// attach connnecting line's tail position to the current node
 			lay.component.Connections[curIdx-1].Position2 = fyne.NewPos(
-				curNode.Component.Position1.X,
+				curNode.Shape.Position1.X,
 				centerPos.Y,
 			)
 		}
@@ -82,59 +84,78 @@ func (lay *LinkedListLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-func (lay *LinkedListLayout) render() *fyne.Container {
-	canvasObjs := []fyne.CanvasObject{}
-	curNode := lay.component.Root
-	curIdx := 0
-	for curNode != nil {
-		// add connecting line from the second node
-		if curIdx > 0 {
-			line := canvas.Line{
-				StrokeColor: theme.ForegroundColor(),
-				StrokeWidth: 3,
-			}
-			lay.component.Connections = append(lay.component.Connections, &line)
-			canvasObjs = append(canvasObjs, &line)
-		}
-		curNode.Component = &canvas.Circle{
-			StrokeColor: color.White,
-			StrokeWidth: 5,
-		}
-		curNode.Text = &canvas.Text{
-			Text:     fmt.Sprintf("%v", curNode.Data.Value),
-			Color:    color.White,
-			TextSize: 12,
-			TextStyle: fyne.TextStyle{
-				Bold: true,
-			},
-		}
-		canvasObjs = append(canvasObjs, curNode.Component, curNode.Text)
-
-		curNode = curNode.Next
-		curIdx++
-	}
-
-	container := container.NewWithoutLayout(canvasObjs...)
-	container.Layout = lay
-
-	lay.canvas = container
-	return container
-}
-
-func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+func (lay *LinkedListLayout) render(data interface{}) (*fyne.Container, error) {
+	// validate input
 	dataNode, ok := data.(*entity.Node)
 	if !ok {
 		return nil, errors.New("input is not a valid node")
 	}
 
-	rootNodeWrapper := entity.NewNodeWrapper(dataNode)
+	// init
+	canvasObjs := []fyne.CanvasObject{}
+	lay.component = &entity.LinkedList{}
 
-	lay := &LinkedListLayout{
-		component: &entity.LinkedList{
-			Root: rootNodeWrapper,
-		},
+	curNode := dataNode
+	var prevNodeWrapper *entity.NodeWrapper
+
+	for curNode != nil {
+		// init a new node
+		newNodeWrapper := &entity.NodeWrapper{
+			Data: curNode,
+		}
+
+		// setup layout for new node
+		newNodeWrapper.Shape = &canvas.Circle{
+			StrokeColor: color.White,
+			StrokeWidth: 2,
+		}
+		newNodeWrapper.Interaction = widget.NewButton(fmt.Sprintf("%v", curNode.Value), func() {
+		})
+		canvasObjs = append(canvasObjs, newNodeWrapper.Shape, newNodeWrapper.Interaction)
+
+		// attach new node to old node
+		newNodeWrapper.Prev = prevNodeWrapper
+
+		if prevNodeWrapper == nil {
+			// initialize the root
+			lay.component.Root = newNodeWrapper
+		} else {
+			// attach previous node with new node
+			prevNodeWrapper.Next = newNodeWrapper
+
+			// add connecting line from the second node
+			line := canvas.Line{
+				StrokeColor: theme.ForegroundColor(),
+				StrokeWidth: 2,
+			}
+			lay.component.Connections = append(lay.component.Connections, &line)
+			canvasObjs = append(canvasObjs, &line)
+		}
+
+		// traverse to new node
+		prevNodeWrapper = newNodeWrapper
+		curNode = curNode.Next
 	}
 
-	container := lay.render()
-	return container, nil
+	lay.detail = entity.NewNodeInfo()
+	content := container.NewWithoutLayout(canvasObjs...)
+	content.Layout = lay
+	lay.canvas = content
+	return content, nil
+}
+
+func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+	lay := &LinkedListLayout{}
+
+	content, err := lay.render(data)
+	if err != nil {
+		return nil, err
+	}
+	box := container.NewVBox(
+		content,
+		layout.NewSpacer(),
+		lay.detail.Detail,
+		layout.NewSpacer(),
+	)
+	return box, nil
 }

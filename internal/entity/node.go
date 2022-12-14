@@ -1,6 +1,10 @@
 package entity
 
-import "fyne.io/fyne/v2/canvas"
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/widget"
+)
 
 type (
 	Node struct {
@@ -9,11 +13,11 @@ type (
 	}
 
 	NodeWrapper struct {
-		Data      *Node
-		Component *canvas.Circle
-		Text      *canvas.Text
-		Next      *NodeWrapper
-		Prev      *NodeWrapper
+		Data        *Node
+		Shape       *canvas.Circle
+		Interaction *widget.Button
+		Next        *NodeWrapper
+		Prev        *NodeWrapper
 	}
 
 	LinkedList struct {
@@ -22,28 +26,15 @@ type (
 	}
 )
 
-// TODO: add unit test
-func NewNodeWrapper(node *Node) *NodeWrapper {
-	rootNodeWrapper := &NodeWrapper{}
-	if node == nil {
-		rootNodeWrapper = nil
-	} else {
-		curNode := node
-		curNodeWrapper := rootNodeWrapper
-		curNodeWrapper.Data = curNode
-		curNode = curNode.Next
-		for curNode != nil {
-			// init a new node
-			curNodeWrapper.Next = &NodeWrapper{
-				Data: curNode,
-			}
-			// attach new node to old node
-			curNodeWrapper.Next.Prev = curNodeWrapper
+func (nw *NodeWrapper) Resize(s fyne.Size) {
+	nw.Shape.Resize(s)
+	nw.Interaction.Resize(s)
+}
 
-			// traverse to new node
-			curNodeWrapper = curNodeWrapper.Next
-			curNode = curNode.Next
-		}
-	}
-	return rootNodeWrapper
+func (nw *NodeWrapper) Move(pos fyne.Position) {
+	// move the shape
+	nw.Shape.Move(pos)
+
+	// move the button along with the shape
+	nw.Interaction.Move(pos)
 }
