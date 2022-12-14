@@ -6,13 +6,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 type (
 	NodeInfo struct {
 		Detail  *fyne.Container
 		address *canvas.Text
-		info    *canvas.Text
+		info    *widget.Label
 	}
 )
 
@@ -38,10 +39,7 @@ func NewNodeInfo() *NodeInfo {
 			Bold: true,
 		},
 	}
-	ni.info = &canvas.Text{
-		Color:    color.White,
-		TextSize: 12,
-	}
+	ni.info = &widget.Label{}
 	ni.Detail = container.NewVBox(
 		container.NewHBox(
 			&nodeAddrLabel,

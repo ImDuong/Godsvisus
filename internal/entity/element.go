@@ -11,7 +11,8 @@ import (
 
 type (
 	ElementWrapper struct {
-		Data        *Node
+		Data        interface{}
+		DataAddr    uintptr
 		Shape       *canvas.Rectangle
 		Interaction *widget.Button
 	}
@@ -22,18 +23,22 @@ type (
 )
 
 func NewElementWrapperList(data interface{}) (*ElementWrapperList, error) {
-	if reflect.TypeOf(data).Kind() != reflect.Slice {
-		return nil, errors.New("input data is not a list")
+	dataKind := reflect.TypeOf(data).Kind()
+	if dataKind != reflect.Slice && dataKind != reflect.Array {
+		return nil, errors.New("input data is not a slice")
 	}
 	dataSlice := reflect.ValueOf(data)
+
 	eleList := ElementWrapperList{}
+	eleList.Nodes = make([]*ElementWrapper, dataSlice.Len())
 
 	for i := 0; i < dataSlice.Len(); i++ {
-		eleList.Nodes = append(eleList.Nodes, &ElementWrapper{
-			Data: &Node{
-				Value: dataSlice.Index(i).Interface(),
-			},
-		})
+		eleList.Nodes[i] = &ElementWrapper{
+			Data: dataSlice.Index(i).Interface(),
+		}
+		if dataSlice.Index(i).CanAddr() {
+			eleList.Nodes[i].DataAddr = dataSlice.Index(i).UnsafeAddr()
+		}
 	}
 	return &eleList, nil
 }

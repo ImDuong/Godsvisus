@@ -56,9 +56,9 @@ func (lay *ArrayLayout) render() *fyne.Container {
 			StrokeColor: color.White,
 			StrokeWidth: 2,
 		}
-		mainText := fmt.Sprintf("%v", lay.component.Nodes[i].Data.Value)
-		eleAddr := fmt.Sprintf("%p", lay.component.Nodes[i].Data)
-		eleDetailJson, err := json.Marshal(lay.component.Nodes[i].Data)
+		mainText := fmt.Sprintf("%v", lay.component.Nodes[i].Data)
+		eleAddr := fmt.Sprintf("0x%x", lay.component.Nodes[i].DataAddr)
+		eleDetailJson, err := json.MarshalIndent(lay.component.Nodes[i].Data, "", "\t")
 		if err != nil {
 			panic(err)
 		}
