@@ -2,8 +2,10 @@ package array
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image/color"
+	"reflect"
 
 	"godsvisus/internal/entity"
 
@@ -49,9 +51,32 @@ func (lay *ArrayLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-func (lay *ArrayLayout) render() *fyne.Container {
+func (lay *ArrayLayout) render(data interface{}) (*fyne.Container, error) {
+	// validate input
+	dataKind := reflect.TypeOf(data).Kind()
+	if dataKind != reflect.Slice && dataKind != reflect.Array {
+		return nil, errors.New("input data is not a list")
+	}
+
+	// parse input
+	dataList := reflect.ValueOf(data)
+
+	// init nodes & canvas objs
+	lay.component = &entity.ElementWrapperList{
+		Nodes: make([]*entity.ElementWrapper, dataList.Len()),
+	}
 	canvasObjs := []fyne.CanvasObject{}
-	for i := range lay.component.Nodes {
+
+	for i := 0; i < dataList.Len(); i++ {
+		// setup node data
+		lay.component.Nodes[i] = &entity.ElementWrapper{
+			Data: dataList.Index(i).Interface(),
+		}
+		if dataList.Index(i).CanAddr() {
+			lay.component.Nodes[i].DataAddr = dataList.Index(i).UnsafeAddr()
+		}
+
+		// setup node layout
 		lay.component.Nodes[i].Shape = &canvas.Rectangle{
 			StrokeColor: color.White,
 			StrokeWidth: 2,
@@ -60,35 +85,29 @@ func (lay *ArrayLayout) render() *fyne.Container {
 		eleAddr := fmt.Sprintf("0x%x", lay.component.Nodes[i].DataAddr)
 		eleDetailJson, err := json.MarshalIndent(lay.component.Nodes[i].Data, "", "\t")
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		lay.component.Nodes[i].Interaction = widget.NewButton(mainText, func() {
 			lay.detail.SetInfo(eleAddr, string(eleDetailJson))
 			lay.detail.Detail.Refresh()
 		})
+
+		// register canvas objs
 		canvasObjs = append(canvasObjs, lay.component.Nodes[i].Shape, lay.component.Nodes[i].Interaction)
 	}
-
 	lay.detail = entity.NewNodeInfo()
-
 	content := container.NewWithoutLayout(canvasObjs...)
 	content.Layout = lay
-
 	lay.canvas = content
-	return content
+	return content, nil
 }
 
 func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
-	eleList, err := entity.NewElementWrapperList(data)
+	lay := &ArrayLayout{}
+	content, err := lay.render(data)
 	if err != nil {
 		return nil, err
 	}
-
-	lay := &ArrayLayout{
-		component: eleList,
-	}
-
-	content := lay.render()
 
 	box := container.NewVBox(
 		content,

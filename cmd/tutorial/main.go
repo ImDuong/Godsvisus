@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"godsvisus/internal/entity"
 	"godsvisus/visualize/array"
 	"godsvisus/visualize/linkedlist"
@@ -21,27 +20,6 @@ type appInfo struct {
 	data interface{}
 	run  func(fyne.Window, interface{}) (fyne.CanvasObject, error)
 }
-type teststruct struct {
-	Value int
-	Thing string
-}
-
-var test = []teststruct{
-	{
-		Value: 3,
-		Thing: "kuro",
-	},
-	{
-		Value: 2,
-		Thing: "shit",
-	},
-	{
-		Value: 1,
-		Thing: "hehe",
-	},
-}
-
-// var test = [3]int{10, 2, 69}
 
 var apps = []appInfo{
 	{"Linked List", nil, false, &entity.Node{
@@ -53,15 +31,10 @@ var apps = []appInfo{
 			},
 		},
 	}, linkedlist.Load},
-	{"Array", nil, false, test, array.Load},
+	{"Array", nil, false, []int{6, 3, 100}, array.Load},
 }
 
 func main() {
-	fmt.Printf("%p\n", &test)
-	fmt.Printf("%p\n", &test[0])
-	fmt.Printf("%p\n", &test[1])
-	fmt.Printf("%p\n", &test[2])
-
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Gods Visus Tutorial")
 
