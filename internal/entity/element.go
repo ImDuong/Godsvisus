@@ -31,3 +31,14 @@ func (ew *ElementWrapper) Move(pos fyne.Position) {
 	// move the button along with the shape
 	ew.Interaction.Move(pos)
 }
+
+func (ew *ElementWrapper) Refresh() {
+	ew.Shape.Refresh()
+	ew.Interaction.Refresh()
+}
+
+func (ewl *ElementWrapperList) Refresh() {
+	for i := range ewl.Nodes {
+		ewl.Nodes[i].Refresh()
+	}
+}

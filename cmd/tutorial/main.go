@@ -18,7 +18,7 @@ type appInfo struct {
 	icon fyne.Resource
 	canv bool
 	data interface{}
-	run  func(fyne.Window, interface{}) (fyne.CanvasObject, error)
+	run  func(fyne.Window, interface{}) (fyne.CanvasObject, fyne.Layout, error)
 }
 
 var apps = []appInfo{
@@ -31,7 +31,10 @@ var apps = []appInfo{
 			},
 		},
 	}, linkedlist.Load},
-	{"Array", nil, false, []int{6, 3, 100}, array.Load},
+	{"Array", nil, false, [][]int{
+		{6, 3, 100, 55},
+		{6, 3, 100, 2},
+	}, array.Load},
 }
 
 func main() {
@@ -60,9 +63,9 @@ func main() {
 			text.SetText(apps[id].name)
 		})
 	appList.OnSelected = func(id widget.ListItemID) {
-		canvasObj, err := apps[id].run(myWindow, apps[id].data)
+		canvasObj, _, err := apps[id].run(myWindow, apps[id].data)
 		if err != nil {
-			log.Fatal("Error when drawing gadget", err)
+			log.Fatal("Error when drawing gadget: ", err)
 		} else {
 			content.Objects = []fyne.CanvasObject{canvasObj}
 		}

@@ -153,12 +153,12 @@ func (lay *LinkedListLayout) render(data interface{}) (*fyne.Container, error) {
 	return content, nil
 }
 
-func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, fyne.Layout, error) {
 	lay := &LinkedListLayout{}
 
 	content, err := lay.render(data)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	box := container.NewVBox(
 		content,
@@ -166,5 +166,5 @@ func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
 		lay.detail.Detail,
 		layout.NewSpacer(),
 	)
-	return box, nil
+	return box, lay, nil
 }
