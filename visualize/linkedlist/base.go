@@ -1,6 +1,7 @@
 package linkedlist
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image/color"
@@ -109,7 +110,15 @@ func (lay *LinkedListLayout) render(data interface{}) (*fyne.Container, error) {
 			StrokeColor: color.White,
 			StrokeWidth: 2,
 		}
-		newNodeWrapper.Interaction = widget.NewButton(fmt.Sprintf("%v", curNode.Value), func() {
+		mainText := fmt.Sprintf("%v", curNode.Value)
+		nodeAddr := fmt.Sprintf("%p", curNode)
+		nodeDetailJson, err := json.MarshalIndent(curNode, "", "\t")
+		if err != nil {
+			return nil, err
+		}
+		newNodeWrapper.Interaction = widget.NewButton(mainText, func() {
+			lay.detail.SetInfo(nodeAddr, string(nodeDetailJson))
+			lay.detail.Detail.Refresh()
 		})
 		canvasObjs = append(canvasObjs, newNodeWrapper.Shape, newNodeWrapper.Interaction)
 
