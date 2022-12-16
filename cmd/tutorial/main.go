@@ -22,12 +22,20 @@ type appInfo struct {
 }
 
 var apps = []appInfo{
-	{"Linked List", nil, false, &entity.Node{
-		Value: 12,
-		Next: &entity.Node{
-			Value: 3,
+	{"Linked List", nil, false, []*entity.Node{
+		{
+			Value: 12,
 			Next: &entity.Node{
-				Value: 69,
+				Value: 3,
+				Next: &entity.Node{
+					Value: 69,
+				},
+			},
+		},
+		{
+			Value: 4,
+			Next: &entity.Node{
+				Value: 3,
 			},
 		},
 	}, linkedlist.Load},
