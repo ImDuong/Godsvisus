@@ -18,9 +18,10 @@ import (
 
 type (
 	ArrayLayout struct {
-		component *entity.ElementWrapperList
-		detail    *entity.NodeInfo
-		canvas    fyne.CanvasObject
+		components []*entity.ElementWrapperList
+		detail     *entity.NodeInfo
+		canvas     fyne.CanvasObject
+		isArranged bool
 	}
 )
 
@@ -29,6 +30,11 @@ func (lay *ArrayLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (lay *ArrayLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
+	// avoid duplication of layout
+	if lay.isArranged {
+		return
+	}
+
 	// downsize 10 times
 	var downRatio float32 = 10
 	if size.Width > lay.MinSize(objs).Width*downRatio {
@@ -39,16 +45,20 @@ func (lay *ArrayLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
 	}
 
 	// hardcode hoziontal layout for an array
-	distance := fyne.NewSize(size.Width, 0)
-	for i, node := range lay.component.Nodes {
-		node.Resize(size)
+	distanceBtwEles := fyne.NewSize(size.Width, 0)
+	distanceBtwLists := fyne.NewSize(0, size.Height*2)
+	for compIdx := range lay.components {
+		for i, node := range lay.components[compIdx].Nodes {
+			node.Resize(size)
 
-		// separate every element by a distance of node.Shape.StrokeWidth
-		node.Move(fyne.NewPos(
-			float32(i)*(distance.Width+node.Shape.StrokeWidth*2),
-			float32(i)*distance.Height,
-		))
+			// separate every element in a list by a distance of node.Shape.StrokeWidth
+			node.Move(fyne.NewPos(
+				float32(i)*(distanceBtwEles.Width+node.Shape.StrokeWidth*2)+float32(compIdx)*distanceBtwLists.Width,
+				float32(i)*distanceBtwEles.Height+float32(compIdx)*distanceBtwLists.Height,
+			))
+		}
 	}
+	lay.isArranged = true
 }
 
 func (lay *ArrayLayout) render(data interface{}) (*fyne.Container, error) {
@@ -59,54 +69,67 @@ func (lay *ArrayLayout) render(data interface{}) (*fyne.Container, error) {
 	}
 
 	// parse input
-	dataList := reflect.ValueOf(data)
+	arrayList := reflect.ValueOf(data)
 
-	// init nodes & canvas objs
-	lay.component = &entity.ElementWrapperList{
-		Nodes: make([]*entity.ElementWrapper, dataList.Len()),
-	}
+	// init canvas objs
 	canvasObjs := []fyne.CanvasObject{}
 
-	for i := 0; i < dataList.Len(); i++ {
-		// setup node data
-		lay.component.Nodes[i] = &entity.ElementWrapper{
-			Data: dataList.Index(i).Interface(),
-		}
-		if dataList.Index(i).CanAddr() {
-			lay.component.Nodes[i].DataAddr = dataList.Index(i).UnsafeAddr()
+	// init nodes
+	lay.components = make([]*entity.ElementWrapperList, arrayList.Len())
+
+	for compIdx := 0; compIdx < arrayList.Len(); compIdx++ {
+		arrayComponent := arrayList.Index(compIdx)
+		eleKind := reflect.TypeOf(arrayComponent.Interface()).Kind()
+		if eleKind != reflect.Slice && eleKind != reflect.Array {
+			return nil, errors.New("element of input data is not a list")
 		}
 
-		// setup node layout
-		lay.component.Nodes[i].Shape = &canvas.Rectangle{
-			StrokeColor: color.White,
-			StrokeWidth: 2,
+		lay.components[compIdx] = &entity.ElementWrapperList{
+			Nodes: make([]*entity.ElementWrapper, arrayComponent.Len()),
 		}
-		mainText := fmt.Sprintf("%v", lay.component.Nodes[i].Data)
-		eleAddr := fmt.Sprintf("0x%x", lay.component.Nodes[i].DataAddr)
-		eleDetailJson, err := json.MarshalIndent(lay.component.Nodes[i].Data, "", "\t")
-		if err != nil {
-			return nil, err
-		}
-		lay.component.Nodes[i].Interaction = widget.NewButton(mainText, func() {
-			lay.detail.SetInfo(eleAddr, string(eleDetailJson))
-			lay.detail.Detail.Refresh()
-		})
 
-		// register canvas objs
-		canvasObjs = append(canvasObjs, lay.component.Nodes[i].Shape, lay.component.Nodes[i].Interaction)
+		for i := 0; i < arrayComponent.Len(); i++ {
+			// setup node data
+			lay.components[compIdx].Nodes[i] = &entity.ElementWrapper{
+				Data: arrayComponent.Index(i).Interface(),
+			}
+			if arrayComponent.Index(i).CanAddr() {
+				lay.components[compIdx].Nodes[i].DataAddr = arrayComponent.Index(i).UnsafeAddr()
+			}
+
+			// setup node layout
+			lay.components[compIdx].Nodes[i].Shape = &canvas.Rectangle{
+				StrokeColor: color.White,
+				StrokeWidth: 2,
+			}
+			mainText := fmt.Sprintf("%v", lay.components[compIdx].Nodes[i].Data)
+			eleAddr := fmt.Sprintf("0x%x", lay.components[compIdx].Nodes[i].DataAddr)
+			eleDetailJson, err := json.MarshalIndent(lay.components[compIdx].Nodes[i].Data, "", "\t")
+			if err != nil {
+				return nil, err
+			}
+			lay.components[compIdx].Nodes[i].Interaction = widget.NewButton(mainText, func() {
+				lay.detail.SetInfo(eleAddr, string(eleDetailJson))
+				lay.detail.Detail.Refresh()
+			})
+
+			canvasObjs = append(canvasObjs, lay.components[compIdx].Nodes[i].Shape, lay.components[compIdx].Nodes[i].Interaction)
+		}
 	}
-	lay.detail = entity.NewNodeInfo()
+
+	// register canvas objs with the container
 	content := container.NewWithoutLayout(canvasObjs...)
 	content.Layout = lay
 	lay.canvas = content
 	return content, nil
 }
 
-func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
+func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, fyne.Layout, error) {
 	lay := &ArrayLayout{}
+	lay.detail = entity.NewNodeInfo()
 	content, err := lay.render(data)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	box := container.NewVBox(
@@ -115,5 +138,5 @@ func Load(win fyne.Window, data interface{}) (fyne.CanvasObject, error) {
 		lay.detail.Detail,
 		layout.NewSpacer(),
 	)
-	return box, nil
+	return box, lay, nil
 }
