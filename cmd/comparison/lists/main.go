@@ -9,7 +9,7 @@ import (
 
 func main() {
 	myApp := app.New()
-	myWindow := myApp.NewWindow("Gods Visus List Comparison")
+	myWindow := myApp.NewWindow("Gods Visus Lists Comparison")
 
 	visObj, visLay, err := array.Load(myWindow, [][]int{
 		{6, 3, 100, 55, 87, -4},
