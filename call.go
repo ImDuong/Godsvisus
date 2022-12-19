@@ -7,13 +7,11 @@ import (
 	"fyne.io/fyne/v2/app"
 )
 
-func ShowArray(data interface{}) error {
+func ShowArrays(data interface{}) error {
 	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus Lists Comparison")
+	visusWindow := visusApp.NewWindow("Gods Visus: List")
 
-	visObj, _, err := array.Load(visusWindow, []interface{}{
-		data,
-	})
+	visObj, _, err := array.Load(visusWindow, data)
 	if err != nil {
 		return err
 	}
@@ -22,6 +20,23 @@ func ShowArray(data interface{}) error {
 	visusWindow.Resize(fyne.NewSize(1000, 500))
 	visusWindow.Show()
 
-	go visusApp.Run()
+	visusApp.Run()
+	return nil
+}
+
+func CompareArrays(data interface{}) error {
+	visusApp := app.New()
+	visusWindow := visusApp.NewWindow("Gods Visus: Lists Comparison")
+
+	visObj, visLay, err := array.Load(visusWindow, data)
+	if err != nil {
+		return err
+	}
+
+	visusWindow.SetContent(visObj)
+	visusWindow.Resize(fyne.NewSize(1000, 500))
+	visusWindow.Show()
+	visLay.(*array.ArrayLayout).Compare()
+	visusApp.Run()
 	return nil
 }
