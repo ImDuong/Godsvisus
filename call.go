@@ -8,6 +8,10 @@ import (
 	"fyne.io/fyne/v2"
 )
 
+func Init() {
+	visusapp.InitVisusApp()
+}
+
 func Run() {
 	visusapp.Run()
 }
