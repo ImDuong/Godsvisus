@@ -1,8 +1,8 @@
 package main
 
 import (
-	"godsvisus/internal/entity"
-	"godsvisus/visualize/linkedlist"
+	"github.com/ImDuong/godsvisus/internal/entity"
+	"github.com/ImDuong/godsvisus/visualize/linkedlist"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"

@@ -2,9 +2,10 @@ package linkedlist
 
 import (
 	"errors"
-	"godsvisus/internal/entity"
 	"image/color"
 	"reflect"
+
+	"github.com/ImDuong/godsvisus/internal/entity"
 )
 
 func (lay *LinkedListLayout) Compare() error {

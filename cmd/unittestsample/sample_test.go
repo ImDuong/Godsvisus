@@ -1,9 +1,10 @@
 package unittestsample_test
 
 import (
-	"godsvisus"
 	"reflect"
 	"testing"
+
+	"github.com/ImDuong/godsvisus"
 )
 
 // moveZeroes moves all zeroes to the end of slice

@@ -2,9 +2,10 @@ package array
 
 import (
 	"errors"
-	"godsvisus/internal/entity"
 	"image/color"
 	"reflect"
+
+	"github.com/ImDuong/godsvisus/internal/entity"
 )
 
 func (lay *ArrayLayout) Compare() error {

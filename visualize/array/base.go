@@ -7,7 +7,7 @@ import (
 	"image/color"
 	"reflect"
 
-	"godsvisus/internal/entity"
+	"github.com/ImDuong/godsvisus/internal/entity"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

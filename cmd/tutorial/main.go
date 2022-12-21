@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"godsvisus"
-	"godsvisus/internal/entity"
+
+	"github.com/ImDuong/godsvisus"
+	"github.com/ImDuong/godsvisus/internal/entity"
 )
 
 func main() {

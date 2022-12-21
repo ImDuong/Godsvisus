@@ -1,7 +1,7 @@
 package main
 
 import (
-	"godsvisus/visualize/array"
+	"github.com/ImDuong/godsvisus/visualize/array"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"

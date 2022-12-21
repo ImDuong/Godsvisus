@@ -1,4 +1,4 @@
-module godsvisus
+module github.com/ImDuong/godsvisus
 
 go 1.16
 

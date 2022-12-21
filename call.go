@@ -1,9 +1,9 @@
 package godsvisus
 
 import (
-	visusapp "godsvisus/internal/app"
-	"godsvisus/visualize/array"
-	"godsvisus/visualize/linkedlist"
+	visusapp "github.com/ImDuong/godsvisus/internal/app"
+	"github.com/ImDuong/godsvisus/visualize/array"
+	"github.com/ImDuong/godsvisus/visualize/linkedlist"
 
 	"fyne.io/fyne/v2"
 )
