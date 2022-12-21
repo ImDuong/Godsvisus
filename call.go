@@ -1,77 +1,57 @@
 package godsvisus
 
 import (
+	visusapp "godsvisus/internal/app"
 	"godsvisus/visualize/array"
 	"godsvisus/visualize/linkedlist"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 )
 
-func ShowArrays(data interface{}) error {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus: Lists")
-
-	visObj, _, err := array.Load(visusWindow, data)
-	if err != nil {
-		return err
-	}
-
-	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
-	visusWindow.Show()
-
-	visusApp.Run()
-	return nil
+func Init() {
+	visusapp.InitVisusApp()
 }
 
-func CompareArrays(data interface{}) error {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus: Lists Comparison")
-
-	visObj, visLay, err := array.Load(visusWindow, data)
-	if err != nil {
-		return err
-	}
-
-	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
-	visusWindow.Show()
-	visLay.(*array.ArrayLayout).Compare()
-	visusApp.Run()
-	return nil
+func Run() {
+	visusapp.Run()
 }
 
-func ShowLinkedLists(data interface{}) error {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus: Linked Lists")
-
-	visObj, _, err := linkedlist.Load(visusWindow, data)
+func ShowArrays(data interface{}) (fyne.Layout, error) {
+	visLay, err := visusapp.LoadLayout(array.Load, data, "Gods Visus: Lists")
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
-	visusWindow.Show()
-
-	visusApp.Run()
-	return nil
+	return visLay, nil
 }
 
-func CompareLinkedLists(data interface{}) error {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus: Lists Comparison")
-
-	visObj, visLay, err := linkedlist.Load(visusWindow, data)
+func CompareArrays(data interface{}) (fyne.Layout, error) {
+	visLay, err := visusapp.LoadLayout(array.Load, data, "Gods Visus: Lists Comparison")
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return visLay, visLay.(*array.ArrayLayout).Compare()
+}
 
-	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
-	visusWindow.Show()
-	visLay.(*linkedlist.LinkedListLayout).Compare()
-	visusApp.Run()
-	return nil
+func CompareDisplayedArrays(visLay fyne.Layout) error {
+	return visLay.(*array.ArrayLayout).Compare()
+}
+
+func ShowLinkedLists(data interface{}) (fyne.Layout, error) {
+	visLay, err := visusapp.LoadLayout(linkedlist.Load, data, "Gods Visus: Linked Lists")
+	if err != nil {
+		return nil, err
+	}
+	return visLay, nil
+}
+
+func CompareLinkedLists(data interface{}) (fyne.Layout, error) {
+	visLay, err := visusapp.LoadLayout(linkedlist.Load, data, "Gods Visus: Linked Lists Comparison")
+	if err != nil {
+		return nil, err
+	}
+	return visLay, visLay.(*linkedlist.LinkedListLayout).Compare()
+}
+
+func CompareDisplayedLinkedLists(visLay fyne.Layout) error {
+	return visLay.(*linkedlist.LinkedListLayout).Compare()
 }

@@ -7,17 +7,20 @@ import (
 )
 
 func main() {
-	// testList := []int{6, 3, 100, 55, 87, -4}
-	// defer godsvisus.ShowArrays([][]int{
-	// 	testList,
-	// })
+	defer godsvisus.Run()
 
-	// defer godsvisus.CompareArrays([][]interface{}{
-	// 	{6, 3, 100},
-	// 	{6, 3, "sekai"},
-	// })
+	testListVis, _ := godsvisus.ShowArrays([][]int{
+		{6, 3, 100, 55, 87, -4},
+		{6, 3, 100, 55, 87, 3},
+	})
+	godsvisus.CompareDisplayedArrays(testListVis)
 
-	defer godsvisus.CompareLinkedLists([]*entity.Node{
+	godsvisus.CompareArrays([][]interface{}{
+		{6, 3, 100},
+		{6, 3, "sekai"},
+	})
+
+	godsvisus.CompareLinkedLists([]*entity.Node{
 		{
 			Value: 12,
 			Next: &entity.Node{
