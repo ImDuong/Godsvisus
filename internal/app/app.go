@@ -1,7 +1,6 @@
 package app
 
 import (
-	"godsvisus/visualize/array"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -14,6 +13,11 @@ type (
 	}
 
 	loadLayout func(fyne.Window, interface{}) (fyne.CanvasObject, fyne.Layout, error)
+)
+
+const (
+	visusWindowWidth  float32 = 1000
+	visusWindowHeight float32 = 500
 )
 
 var visusInstance *visusApp
@@ -31,16 +35,19 @@ func Run() {
 	visusInstance.app.Run()
 }
 
-func LoadLayout(loadMethod loadLayout, data interface{}, title string) error {
+func LoadLayout(loadMethod loadLayout, data interface{}, title string) (fyne.Layout, error) {
+	if visusInstance == nil {
+		InitVisusApp()
+	}
 	visusWindow := visusInstance.app.NewWindow(title)
 
-	visObj, _, err := array.Load(visusWindow, data)
+	visObj, visLay, err := loadMethod(visusWindow, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
+	visusWindow.Resize(fyne.NewSize(visusWindowWidth, visusWindowHeight))
 	visusWindow.Show()
-	return err
+	return visLay, err
 }
