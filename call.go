@@ -1,6 +1,7 @@
 package godsvisus
 
 import (
+	visusapp "godsvisus/internal/app"
 	"godsvisus/visualize/array"
 	"godsvisus/visualize/linkedlist"
 
@@ -8,20 +9,20 @@ import (
 	"fyne.io/fyne/v2/app"
 )
 
-func ShowArrays(data interface{}) error {
-	visusApp := app.New()
-	visusWindow := visusApp.NewWindow("Gods Visus: Lists")
+func Init() error {
+	visusapp.InitVisusApp()
+	return nil
+}
 
-	visObj, _, err := array.Load(visusWindow, data)
+func Run() {
+	visusapp.Run()
+}
+
+func ShowArrays(data interface{}) error {
+	err := visusapp.LoadLayout(array.Load, data, "Gods Visus: Lists")
 	if err != nil {
 		return err
 	}
-
-	visusWindow.SetContent(visObj)
-	visusWindow.Resize(fyne.NewSize(1000, 500))
-	visusWindow.Show()
-
-	visusApp.Run()
 	return nil
 }
 
